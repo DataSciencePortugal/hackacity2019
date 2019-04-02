@@ -83,7 +83,7 @@ for resource in j['result']['resources']:
 
 """# IoT Data
 
-A special resource is the information from the IoT platform, which is accessible through the NGSI API. The historical data for each is available at a seperate endpoint. 
+A special resource is the information from the IoT platform, which is accessible through the NGSI API. The historical data for each is available at a seperate endpoint. The data structure for each API access point is available through the NGSI API (see below).
 
 **Types**: Are types of devices or data \\
 **Entities**: Each entity is a device of a certain type
@@ -128,6 +128,30 @@ r = requests.get(url)
 j = r.json()
 pprint.pprint(j)
 
+"""### Georeferenced Queries
+You can also do Georeferenced queries (check documentation here: http://telefonicaid.github.io/fiware-orion/api/v2/stable/)
+"""
+
+## We are going to find all the points of interests within 150 meters radius of Alfandega.
+
+import requests
+import pprint
+url = "https://broker.fiware.urbanplatform.portodigital.pt/v2/entities?type=PointOfInterest&georel=near;maxDistance:150&geometry=point&coords=41.143347472409914,-8.621363679260412"
+r = requests.get(url)
+j = r.json()
+#pprint.pprint(j)
+for poi in j:
+  print(poi['name']['value'])
+  
+  if (poi['description']['value'] is not None):
+    print(poi['description']['value'])
+    
+  if (poi['description']['value'] is not None):
+    print("Multimedia:")
+    for mm in poi['multimedia']['value']:
+      print(mm['url'])
+  print("")
+
 """## Accessing historical values
 The historical values are accessible through the documentation described above. Because the query is quite heavy, you can only access one entity at once. \\
 In the example below we took the id of the first entity of the query above. \\
@@ -138,16 +162,26 @@ Please note: The API automatically limits the number of records, and you will ne
 
 import requests
 import pprint
+# First let's the ID's from the FiWare
+url = "https://broker.fiware.urbanplatform.portodigital.pt/v2/entities?type=AirQualityObserved"
+r = requests.get(url)
+j = r.json()
+print("Available sensores:")
+for sensor in j: 
+  print(sensor['id'])
+print("")
+
+# Get the historical data of one of the sensors
 url = "http://history-data.urbanplatform.portodigital.pt/v2/entities/urn:ngsi-ld:AirQualityObserved:porto:environment:ubiwhere:5adf39366f555a4514e7ea54?limit=20"
 r = requests.get(url)
 j = r.json()
 pprint.pprint(j)
 
-"""# MIP Web
+"""# Georeferenced Data
 
-The final resource is the MIP, which is the API of the city hall that has geographical data. Each dataset has a query builder, which you can experiment with. It is accessible by the URL and on the bottom of the page you can click “query”. All the queries must have at least the “where” parameter set, which works just like a postgresql query.
+The final resource are the georeferenced data, which is the API of the city hall that has geographical data. Each dataset has a query builder, which you can experiment with. It is accessible by the URL and on the bottom of the page you can click “query”. All the queries must have at least the “where” parameter set, which works just like a postgresql query.
 
-Example: [http://mipweb.cm-porto.pt/arcgis/rest/services/APD/OpenData_APD/MapServer/13](http://mipweb.cm-porto.pt/arcgis/rest/services/APD/OpenData_APD/MapServer/13)
+Example: [https://servsig.cm-porto.pt/arcgis/rest/services/OpenData_APD/OpenData_APD/MapServer/13](https://servsig.cm-porto.pt/arcgis/rest/services/OpenData_APD/OpenData_APD/MapServer/13)
 """
 
 import json
@@ -165,12 +199,12 @@ req_params = {
     'outFields': '*',                      # the fields that you want returned
     'orderByFields': 'objectid ASC', 
     #'resultOffset': '4000',
-    #'resultRecordCount': '1000',
+    'resultRecordCount': '10',             #for the purpose of the demonstration we are limiting to 10 results
     'outSR': '4326',
     #'token': str(TOKEN) 
 }
   
-url = 'http://mipweb.cm-porto.pt/arcgis/rest/services/APD/OpenData_APD/MapServer/13/query'
+url = 'https://servsig.cm-porto.pt/arcgis/rest/services/OpenData_APD/OpenData_APD/MapServer/13/query'
 r = requests.get(url, params = req_params)
 data = r.json()
 
